@@ -482,16 +482,16 @@
     ];
 
     const cardSources = [
-      "assets/card-paz.png",
-      "assets/card-amizade.png",
-      "assets/card-gratidao.png",
-      "assets/card-amor.png"
+      "assets/card-paz-arcade.png",
+      "assets/card-amizade-arcade.png",
+      "assets/card-gratidao-arcade.png",
+      "assets/card-amor-arcade.png"
     ];
     const cardSprites = cardSources.map((src) => {
       const img = new Image();
       const sprite = { img, canvas: null, ready: false };
       img.onload = () => {
-        sprite.canvas = makeCardSprite(img, 120, 74);
+        sprite.canvas = makePixelSprite(img, 156, 108, false);
         sprite.ready = true;
       };
       img.src = src;
@@ -502,10 +502,10 @@
     let logoReady = false;
     let logoCanvas;
     logoImg.onload = () => {
-      logoCanvas = makePixelSprite(logoImg, 52, 52, true);
+      logoCanvas = makePixelSprite(logoImg, 84, 68, false);
       logoReady = true;
     };
-    logoImg.src = "assets/comprocard-logo.png";
+    logoImg.src = "assets/logo-arcade.png";
 
     let grid = [];
     let pelletsLeft = 0;
@@ -542,20 +542,6 @@
       return small;
     }
 
-    function makeCardSprite(img, width, height) {
-      const sprite = document.createElement("canvas");
-      sprite.width = width;
-      sprite.height = height;
-      const sctx = sprite.getContext("2d");
-      sctx.imageSmoothingEnabled = false;
-      const sx = Math.round(img.naturalWidth * .028);
-      const sy = Math.round(img.naturalHeight * .04);
-      const sw = Math.round(img.naturalWidth * .896);
-      const sh = Math.round(img.naturalHeight * .835);
-      sctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
-      return sprite;
-    }
-
     function makeMap() {
       const map = Array.from({ length: ROWS }, () => Array(COLS).fill("."));
 
@@ -588,6 +574,7 @@
         [6, 8], [22, 8],
         [6, 9], [22, 9]
       ]);
+      clearOpenArea(map, 1, 6, 23, 10);
 
       wallLine(12, 2, 6);
       wallLine(12, 9, 15);
@@ -620,6 +607,7 @@
         [9, 28], [13, 28], [17, 28],
         [17, 29], [17, 30]
       ]);
+      clearOpenArea(map, 3, 27, 21, 31);
 
       wallLine(25, 2, 6);
       wallLine(25, 9, 15);
@@ -677,6 +665,14 @@
       cells.forEach(([x, y]) => {
         map[y][x] = "x";
       });
+    }
+
+    function clearOpenArea(map, x1, y1, x2, y2) {
+      for (let y = y1; y <= y2; y++) {
+        for (let x = x1; x <= x2; x++) {
+          if (map[y][x] === ".") map[y][x] = " ";
+        }
+      }
     }
 
     function freshGame() {
@@ -961,23 +957,18 @@
       for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
           const token = grid[y][x];
-          if (!isWall(token)) continue;
+          if (token !== "#") continue;
 
           const px = x * cell;
           const py = y * rowH;
-          const color = wallColors[token] || wallColors["#"];
-          if (token === "x") {
-            ctx.fillStyle = "#000";
-            ctx.fillRect(px, py, cell + 1, rowH + 1);
-            continue;
-          }
           ctx.fillStyle = "#000";
           ctx.fillRect(px, py, cell + 1, rowH + 1);
-          drawWallOutline(x, y, px, py, shadeColor(color, .48), token === "#" ? 2 : 3, 2);
-          drawWallOutline(x, y, px, py, color, token === "#" ? 2 : 3, token === "#" ? 7 : 9);
+          drawWallOutline(x, y, px, py, "#001849", 8, 3);
+          drawWallOutline(x, y, px, py, "#0759ff", 3, 3);
         }
       }
       ctx.shadowBlur = 0;
+      drawBrandWords();
     }
 
     function drawWallOutline(x, y, px, py, color, width, inset) {
@@ -1004,6 +995,34 @@
       ctx.stroke();
     }
 
+    function drawBrandWords() {
+      drawNeonWord("COMPRO", canvas.width / 2, rowH * 10.85, 188, canvas.width - cell * 1.8);
+      drawNeonWord("CARD", canvas.width / 2, rowH * 31.85, 225, canvas.width - cell * 6.2);
+    }
+
+    function drawNeonWord(text, cx, baseline, fontSize, maxWidth) {
+      ctx.save();
+      ctx.font = `900 ${fontSize}px "Arial Black", Impact, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.lineJoin = "bevel";
+      ctx.miterLimit = 2;
+      const measured = ctx.measureText(text).width;
+      const scaleX = Math.min(1, maxWidth / measured);
+      ctx.translate(Math.round(cx), Math.round(baseline));
+      ctx.scale(scaleX, 1);
+      ctx.strokeStyle = "#001849";
+      ctx.lineWidth = 18;
+      ctx.strokeText(text, 0, 0);
+      ctx.strokeStyle = "#0759ff";
+      ctx.lineWidth = 9;
+      ctx.strokeText(text, 0, 0);
+      ctx.strokeStyle = "#002b91";
+      ctx.lineWidth = 2;
+      ctx.strokeText(text, 0, 0);
+      ctx.restore();
+    }
+
     function shadeColor(hex, amount) {
       const value = parseInt(hex.slice(1), 16);
       const r = Math.round(((value >> 16) & 255) * amount);
@@ -1023,7 +1042,7 @@
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(Math.round(cx - 3.5), Math.round(cy - 3.5), 7, 7);
           } else if (item === "H") {
-            drawLogoPower(cx, cy, 40 + Math.sin(now / 210) * 2);
+            drawLogoPower(cx, cy, 50 + Math.sin(now / 210) * 2);
           } else if (item === "B") {
             drawBonusCard(cx, cy, cardIndex++);
           }
@@ -1045,8 +1064,8 @@
 
     function drawBonusCard(cx, cy, index) {
       const sprite = cardSprites[index % cardSprites.length];
-      const w = cell * 2.55;
-      const h = w * .61;
+      const w = cell * 3.85;
+      const h = w * .68;
       ctx.save();
       ctx.translate(cx, cy);
       ctx.shadowColor = "rgba(255, 255, 255, .35)";
