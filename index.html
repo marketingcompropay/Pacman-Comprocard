@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ComproCard Chase - Vertical</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000000'/%3E%3Cpath fill='%23ff1026' d='M16 27 5 16a7 7 0 0 1 10-10l1 1 1-1a7 7 0 0 1 10 10Z'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: dark;
+      --black: #000000;
+      --ink: #ffffff;
+      --muted: #aaa8bc;
+      --blue: #2932ff;
+      --red: #ff1026;
+      --gold: #ffe650;
+      --panel: #0b0b16;
+      --line: #272847;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #050507;
+    }
+
+    body {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: var(--ink);
+      font-family: "Courier New", monospace;
+    }
+
+    button {
+      border: 2px solid var(--line);
+      border-radius: 4px;
+      background: #121222;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+      min-height: 44px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+
+    button:hover,
+    button:focus-visible {
+      border-color: var(--red);
+      outline: 2px solid rgba(255, 16, 38, .35);
+      outline-offset: 2px;
+    }
+
+    .shell {
+      width: min(100vw, 56.25dvh);
+      height: min(100dvh, 177.7778vw);
+      aspect-ratio: 9 / 16;
+      padding:
+        max(10px, env(safe-area-inset-top))
+        clamp(10px, 1.4vw, 22px)
+        max(10px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: clamp(8px, 1.1vh, 16px);
+      background:
+        linear-gradient(rgba(255, 16, 38, .07), transparent 16%),
+        #050507;
+      box-shadow: 0 0 80px rgba(0, 0, 0, .9);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "brand actions"
+        "hud hud";
+      gap: clamp(8px, 1vh, 14px);
+      align-items: center;
+    }
+
+    .brand {
+      grid-area: brand;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand img {
+      width: clamp(42px, 7.4vh, 72px);
+      height: clamp(42px, 7.4vh, 72px);
+      object-fit: contain;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 10px rgba(255, 16, 38, .48));
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.05rem, 2.2vh, 2rem);
+      line-height: .92;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      text-shadow: 3px 3px 0 #232aa9;
+    }
+
+    h1 span {
+      display: block;
+      color: var(--red);
+    }
+
+    .actions {
+      grid-area: actions;
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .icon-button {
+      width: clamp(44px, 5.4vh, 58px);
+      padding: 0;
+      font-size: clamp(.72rem, 1.2vh, 1rem);
+      line-height: 1;
+    }
+
+    .hud {
+      grid-area: hud;
+      display: grid;
+      grid-template-columns: 1.2fr .8fr .8fr;
+      gap: 8px;
+      padding: clamp(7px, .8vh, 11px) clamp(9px, 1.2vw, 14px);
+      border-block: 2px solid #1e205a;
+      background: #080812;
+      font-size: clamp(.8rem, 1.65vh, 1.45rem);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .hud-item {
+      min-width: 0;
+      white-space: nowrap;
+    }
+
+    .hud-item:nth-child(2),
+    .hud-item:nth-child(3) {
+      text-align: right;
+    }
+
+    .hud strong {
+      color: var(--gold);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stage {
+      position: relative;
+      width: auto;
+      height: 100%;
+      max-width: 100%;
+      aspect-ratio: 5 / 8;
+      justify-self: center;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: var(--black);
+      border: 2px solid #2229b2;
+      box-shadow:
+        0 0 0 2px rgba(45, 53, 255, .25),
+        0 0 28px rgba(45, 53, 255, .2);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, .72);
+      text-align: center;
+    }
+
+    .overlay[hidden] {
+      display: none;
+    }
+
+    .modal {
+      width: min(420px, 92%);
+      padding: clamp(20px, 3vh, 34px);
+      border: 3px solid var(--blue);
+      border-radius: 4px;
+      background: #080812;
+      box-shadow: 8px 8px 0 rgba(255, 16, 38, .45);
+    }
+
+    .modal-logo {
+      width: clamp(78px, 12vh, 126px);
+      height: clamp(78px, 12vh, 126px);
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .modal h2 {
+      margin: 12px 0 10px;
+      color: var(--gold);
+      font-size: clamp(1.55rem, 3.7vh, 3.2rem);
+      line-height: 1;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      text-shadow: 4px 4px 0 #92202d;
+    }
+
+    .modal p {
+      margin: 0 0 18px;
+      color: #d6d5e4;
+      font-size: clamp(.8rem, 1.35vh, 1.1rem);
+      line-height: 1.45;
+    }
+
+    .primary {
+      min-width: 160px;
+      padding: 0 22px;
+      border-color: var(--red);
+      background: var(--red);
+      color: #fff;
+    }
+
+    .footer {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: clamp(10px, 1.8vw, 22px);
+      min-height: 88px;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, clamp(38px, 5vh, 52px));
+      grid-template-rows: repeat(2, clamp(38px, 5vh, 52px));
+      grid-template-areas:
+        ". up ."
+        "left down right";
+      gap: 4px;
+    }
+
+    .dpad button {
+      width: 100%;
+      min-height: 0;
+      padding: 0;
+      font-size: clamp(1rem, 2vh, 1.5rem);
+      touch-action: manipulation;
+    }
+
+    [data-dir="up"] { grid-area: up; }
+    [data-dir="left"] { grid-area: left; }
+    [data-dir="down"] { grid-area: down; }
+    [data-dir="right"] { grid-area: right; }
+
+    .footer-copy {
+      min-width: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: clamp(.64rem, 1.05vh, .92rem);
+      line-height: 1.35;
+      text-transform: uppercase;
+    }
+
+    .footer-copy strong {
+      display: block;
+      color: var(--ink);
+      font-size: 1.18em;
+    }
+
+    .item-key {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: clamp(7px, 1vw, 12px);
+    }
+
+    .key-heart {
+      color: var(--red);
+      font-size: clamp(1.25rem, 2.5vh, 2.2rem);
+      text-shadow: 0 0 8px rgba(255, 16, 38, .65);
+    }
+
+    .key-card {
+      display: grid;
+      place-items: center;
+      width: clamp(38px, 5.2vh, 58px);
+      aspect-ratio: 1.58;
+      border: 2px solid #fff;
+      border-radius: 3px;
+      background: #4a58c6;
+      color: #fff;
+      font-size: clamp(.5rem, .8vh, .72rem);
+      font-weight: 700;
+    }
+
+    @media (max-height: 680px) {
+      .footer {
+        min-height: 72px;
+      }
+
+      .footer-copy {
+        display: none;
+      }
+
+      .footer {
+        grid-template-columns: auto 1fr;
+      }
+    }
+
+    @media (orientation: landscape) {
+      body {
+        overflow: auto;
+      }
+
+      .shell {
+        width: min(100vw, 70vh);
+        height: auto;
+        min-height: 100vh;
+        aspect-ratio: auto;
+      }
+
+      .stage {
+        width: min(100%, 70vh);
+        height: auto;
+        min-height: 72vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <img src="assets/comprocard-logo.png" alt="ComproCard">
+        <h1>ComproCard <span>Chase</span></h1>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="pauseBtn" class="icon-button" aria-label="Pausar ou continuar o jogo">II</button>
+        <button type="button" id="fullscreenBtn" class="icon-button" aria-label="Abrir em tela cheia">FULL</button>
+      </div>
+
+      <div class="hud" aria-live="polite">
+        <div class="hud-item">Score <strong id="score">000000</strong></div>
+        <div class="hud-item">Vidas <strong id="lives">3</strong></div>
+        <div class="hud-item">Poder <strong id="power">0s</strong></div>
+      </div>
+    </header>
+
+    <section class="stage">
+      <canvas id="game" width="900" height="1440" aria-label="Jogo de labirinto vertical da ComproCard"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="modal">
+          <img class="modal-logo" src="assets/comprocard-logo.png" alt="">
+          <h2 id="overlayTitle">Pronto?</h2>
+          <p id="overlayText">Colete os cart&otilde;es, ative os cora&ccedil;&otilde;es ComproCard e alcance o maior score.</p>
+          <button type="button" id="startBtn" class="primary">Jogar</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="dpad" aria-label="Controles de movimento">
+        <button type="button" data-dir="up" aria-label="Cima">&#9650;</button>
+        <button type="button" data-dir="left" aria-label="Esquerda">&#9664;</button>
+        <button type="button" data-dir="down" aria-label="Baixo">&#9660;</button>
+        <button type="button" data-dir="right" aria-label="Direita">&#9654;</button>
+      </div>
+
+      <div class="footer-copy">
+        <strong>Setas ou WASD</strong>
+        Enter inicia &bull; Espa&ccedil;o pausa
+      </div>
+
+      <div class="item-key" aria-label="Itens especiais">
+        <span class="key-heart" aria-label="Cora&ccedil;&atilde;o de poder">&#9829;</span>
+        <span class="key-card" aria-label="Cart&atilde;o b&ocirc;nus">+500</span>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+
+    const scoreEl = document.getElementById("score");
+    const livesEl = document.getElementById("lives");
+    const powerEl = document.getElementById("power");
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayText = document.getElementById("overlayText");
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+    const COLS = 25;
+    const ROWS = 40;
+    const cell = canvas.width / COLS;
+    const rowH = canvas.height / ROWS;
+    const PLAYER_STEP_MS = 155;
+    const GHOST_STEP_MS = 205;
+    const POWER_MS = 9000;
+    const READY_MS = 1050;
+
+    const dirs = {
+      left: { x: -1, y: 0 },
+      right: { x: 1, y: 0 },
+      up: { x: 0, y: -1 },
+      down: { x: 0, y: 1 }
+    };
+    const opposite = { left: "right", right: "left", up: "down", down: "up" };
+    const wallTokens = new Set(["#", "x", "r", "b", "y", "g", "p", "c"]);
+    const wallColors = {
+      "#": "#2932ff",
+      x: "#000000",
+      r: "#ff2440",
+      b: "#2f7cff",
+      y: "#ffe43b",
+      g: "#20d669",
+      p: "#f05bd7",
+      c: "#38d9ff"
+    };
+    const letterPatterns = {
+      C: ["111", "100", "100", "100", "111"],
+      O: ["111", "101", "101", "101", "111"],
+      M: ["101", "111", "111", "101", "101"],
+      P: ["110", "101", "110", "100", "100"],
+      R: ["110", "101", "110", "101", "101"],
+      A: ["010", "101", "111", "101", "101"],
+      D: ["110", "101", "101", "101", "110"]
+    };
+    const playerSpawn = { x: 12, y: 36 };
+    const ghostSpawns = [
+      { x: 10, y: 20, dir: "left", color: "#20d9ff", delay: 700 },
+      { x: 11, y: 20, dir: "up", color: "#ff9f1c", delay: 1700 },
+      { x: 13, y: 20, dir: "right", color: "#ff76c8", delay: 2900 },
+      { x: 14, y: 20, dir: "down", color: "#ff2638", delay: 4100 }
+    ];
+
+    const cardSources = [
+      "assets/card-amor.png",
+      "assets/card-amizade.png",
+      "assets/card-paz.png",
+      "assets/card-gratidao.png"
+    ];
+    const cardSprites = cardSources.map((src) => {
+      const img = new Image();
+      const sprite = { img, canvas: null, ready: false };
+      img.onload = () => {
+        sprite.canvas = makePixelSprite(img, 112, 68, true);
+        sprite.ready = true;
+      };
+      img.src = src;
+      return sprite;
+    });
+
+    const logoImg = new Image();
+    let logoReady = false;
+    let logoCanvas;
+    logoImg.onload = () => {
+      logoCanvas = makePixelSprite(logoImg, 52, 52, true);
+      logoReady = true;
+    };
+    logoImg.src = "assets/comprocard-logo.png";
+
+    let grid = [];
+    let pelletsLeft = 0;
+    let score = 0;
+    let lives = 3;
+    let powerUntil = 0;
+    let invulnerableUntil = 0;
+    let freezeUntil = 0;
+    let roundStartedAt = 0;
+    let state = "ready";
+    let lastTime = performance.now();
+    let playerCarry = 0;
+    let ghostCarry = 0;
+    let mouthPhase = 0;
+    let player;
+    let ghosts;
+
+    function makePixelSprite(img, width, height, removeWhite) {
+      const small = document.createElement("canvas");
+      small.width = width;
+      small.height = height;
+      const sctx = small.getContext("2d", { willReadFrequently: true });
+      sctx.imageSmoothingEnabled = false;
+      sctx.drawImage(img, 0, 0, width, height);
+      if (!removeWhite) return small;
+
+      const image = sctx.getImageData(0, 0, width, height);
+      for (let i = 0; i < image.data.length; i += 4) {
+        const white = image.data[i] > 246 && image.data[i + 1] > 246 && image.data[i + 2] > 246;
+        const black = image.data[i] < 8 && image.data[i + 1] < 8 && image.data[i + 2] < 8;
+        if (white || black) image.data[i + 3] = 0;
+      }
+      sctx.putImageData(image, 0, 0);
+      return small;
+    }
+
+    function makeMap() {
+      const map = Array.from({ length: ROWS }, () => Array(COLS).fill("."));
+
+      for (let x = 0; x < COLS; x++) {
+        map[0][x] = "#";
+        map[ROWS - 1][x] = "#";
+      }
+      for (let y = 0; y < ROWS; y++) {
+        map[y][0] = "#";
+        map[y][COLS - 1] = "#";
+      }
+
+      const wallLine = (y, x1, x2, token = "#") => {
+        for (let x = x1; x <= x2; x++) map[y][x] = token;
+      };
+      const wallColumn = (x, y1, y2, token = "#") => {
+        for (let y = y1; y <= y2; y++) map[y][x] = token;
+      };
+
+      wallLine(2, 3, 9);
+      wallLine(2, 15, 21);
+      wallColumn(12, 1, 3);
+      wallLine(4, 1, 5);
+      wallLine(4, 8, 16);
+      wallLine(4, 19, 23);
+
+      drawWordOnMap(map, "COMPRO", 1, 6, ["r", "b", "y", "g", "p", "r"]);
+      sealCells(map, [
+        [6, 7], [14, 7], [18, 7], [22, 7],
+        [6, 8], [22, 8],
+        [6, 9], [22, 9]
+      ]);
+
+      wallLine(12, 2, 6);
+      wallLine(12, 9, 15);
+      wallLine(12, 18, 22);
+      wallColumn(4, 13, 16);
+      wallColumn(20, 13, 16);
+      wallLine(15, 7, 10);
+      wallLine(15, 14, 17);
+
+      wallLine(17, 2, 7);
+      wallLine(17, 17, 22);
+      wallColumn(7, 18, 22);
+      wallColumn(17, 18, 22);
+      wallLine(23, 2, 7);
+      wallLine(23, 17, 22);
+
+      wallLine(18, 9, 11);
+      wallLine(18, 13, 15);
+      wallColumn(9, 18, 22);
+      wallColumn(15, 18, 22);
+      wallLine(22, 9, 15);
+
+      for (let y = 19; y <= 21; y++) {
+        for (let x = 10; x <= 14; x++) map[y][x] = " ";
+      }
+      map[18][12] = " ";
+
+      drawWordOnMap(map, "CARD", 4, 27, ["c", "y", "r", "g"]);
+      sealCells(map, [
+        [9, 28], [13, 28], [17, 28],
+        [17, 29], [17, 30]
+      ]);
+
+      wallLine(25, 2, 6);
+      wallLine(25, 9, 15);
+      wallLine(25, 18, 22);
+      wallLine(33, 2, 7);
+      wallLine(33, 10, 14);
+      wallLine(33, 17, 22);
+      wallColumn(6, 34, 36);
+      wallColumn(18, 34, 36);
+      wallLine(37, 2, 6);
+      wallLine(37, 8, 10);
+      wallLine(37, 14, 16);
+      wallLine(37, 18, 22);
+
+      map[20][0] = ".";
+      map[20][COLS - 1] = ".";
+
+      placeItem(map, 2, 2, "B");
+      placeItem(map, 22, 2, "B");
+      placeItem(map, 2, 36, "B");
+      placeItem(map, 22, 36, "B");
+
+      placeItem(map, 1, 5, "H");
+      placeItem(map, 23, 5, "H");
+      placeItem(map, 1, 34, "H");
+      placeItem(map, 23, 34, "H");
+      placeItem(map, 12, 14, "H");
+      placeItem(map, 12, 24, "H");
+
+      map[playerSpawn.y][playerSpawn.x] = " ";
+      for (const spawn of ghostSpawns) map[spawn.y][spawn.x] = " ";
+
+      return map;
+    }
+
+    function drawWordOnMap(map, word, startX, startY, colors) {
+      let cursor = startX;
+      [...word].forEach((letter, index) => {
+        const pattern = letterPatterns[letter];
+        const token = colors[index % colors.length];
+        pattern.forEach((row, py) => {
+          [...row].forEach((pixel, px) => {
+            if (pixel === "1") map[startY + py][cursor + px] = token;
+          });
+        });
+        cursor += 4;
+      });
+    }
+
+    function placeItem(map, x, y, item) {
+      if (!wallTokens.has(map[y][x])) map[y][x] = item;
+    }
+
+    function sealCells(map, cells) {
+      cells.forEach(([x, y]) => {
+        map[y][x] = "x";
+      });
+    }
+
+    function freshGame() {
+      grid = makeMap();
+      pelletsLeft = 0;
+      score = 0;
+      lives = 3;
+      powerUntil = 0;
+      invulnerableUntil = 0;
+      playerCarry = 0;
+      ghostCarry = 0;
+      resetRound(performance.now(), true);
+
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          if (grid[y][x] === ".") pelletsLeft++;
+        }
+      }
+      updateHud();
+      draw();
+    }
+
+    function resetRound(now, firstRound = false) {
+      player = { ...playerSpawn, dir: "left", next: "left" };
+      ghosts = ghostSpawns.map((ghost) => ({
+        ...ghost,
+        homeX: ghost.x,
+        homeY: ghost.y,
+        scared: false,
+        eaten: false,
+        releaseAt: now + ghost.delay + (firstRound ? 0 : 500)
+      }));
+      roundStartedAt = now;
+      freezeUntil = now + READY_MS;
+      invulnerableUntil = now + READY_MS + 900;
+      powerUntil = 0;
+      playerCarry = 0;
+      ghostCarry = 0;
+    }
+
+    function startGame() {
+      const startingFresh = state === "ready" || state === "over" || state === "win";
+      if (state === "over" || state === "win") freshGame();
+      state = "playing";
+      overlay.hidden = true;
+      pauseBtn.textContent = "II";
+      startBtn.textContent = "Continuar";
+      lastTime = performance.now();
+      if (startingFresh) resetRound(lastTime, true);
+      requestAnimationFrame(loop);
+    }
+
+    function pauseGame() {
+      if (state === "ready") return;
+      if (state === "playing") {
+        state = "paused";
+        overlayTitle.textContent = "Pausado";
+        overlayText.textContent = "Ajuste a rota e volte para buscar os cart\u00f5es.";
+        startBtn.textContent = "Continuar";
+        overlay.hidden = false;
+        pauseBtn.textContent = ">";
+      } else if (state === "paused") {
+        startGame();
+      }
+    }
+
+    function loop(now) {
+      if (state !== "playing") return;
+      const dt = Math.min(55, now - lastTime);
+      lastTime = now;
+      mouthPhase += dt / 125;
+
+      if (now >= freezeUntil) {
+        playerCarry += dt;
+        ghostCarry += dt;
+
+        while (playerCarry >= PLAYER_STEP_MS) {
+          playerCarry -= PLAYER_STEP_MS;
+          movePlayer();
+          collectAt(player.x, player.y, now);
+          checkCollisions(now);
+        }
+
+        const ghostStep = powerUntil > now ? GHOST_STEP_MS + 45 : GHOST_STEP_MS;
+        while (ghostCarry >= ghostStep) {
+          ghostCarry -= ghostStep;
+          ghosts.forEach((ghost, index) => moveGhost(ghost, index, now));
+          checkCollisions(now);
+        }
+      }
+
+      if (pelletsLeft === 0) endGame(true);
+      updateHud(now);
+      draw(now);
+      requestAnimationFrame(loop);
+    }
+
+    function movePlayer() {
+      if (canMove(player.x, player.y, player.next)) player.dir = player.next;
+      if (!canMove(player.x, player.y, player.dir)) return;
+      player.x = wrapX(player.x + dirs[player.dir].x);
+      player.y += dirs[player.dir].y;
+    }
+
+    function moveGhost(ghost, index, now) {
+      if (now < ghost.releaseAt) return;
+
+      const powered = powerUntil > now;
+      ghost.scared = powered && !ghost.eaten;
+      const target = ghost.eaten
+        ? { x: ghost.homeX, y: ghost.homeY }
+        : powered
+          ? farthestCorner(ghost)
+          : chaseTarget(index);
+
+      const options = Object.keys(dirs)
+        .filter((dir) => dir !== opposite[ghost.dir] || deadEnd(ghost.x, ghost.y))
+        .filter((dir) => canMove(ghost.x, ghost.y, dir));
+
+      if (options.length === 0) return;
+      let best = options[0];
+      let bestScore = ghost.eaten || !powered ? Infinity : -Infinity;
+
+      for (const dir of options) {
+        const nx = wrapX(ghost.x + dirs[dir].x);
+        const ny = ghost.y + dirs[dir].y;
+        const dist = Math.abs(nx - target.x) + Math.abs(ny - target.y);
+        const jitter = ((nx * 13 + ny * 7 + index * 11 + Math.floor(now / 650)) % 5) / 8;
+        if (ghost.eaten || !powered) {
+          if (dist + jitter < bestScore) {
+            bestScore = dist + jitter;
+            best = dir;
+          }
+        } else if (dist + jitter > bestScore) {
+          bestScore = dist + jitter;
+          best = dir;
+        }
+      }
+
+      ghost.dir = best;
+      ghost.x = wrapX(ghost.x + dirs[best].x);
+      ghost.y += dirs[best].y;
+      if (ghost.eaten && ghost.x === ghost.homeX && ghost.y === ghost.homeY) {
+        ghost.eaten = false;
+        ghost.releaseAt = now + 1100;
+      }
+    }
+
+    function chaseTarget(index) {
+      if (index === 0) return { x: player.x, y: player.y };
+      if (index === 1) {
+        return {
+          x: wrapX(player.x + dirs[player.dir].x * 3),
+          y: clamp(player.y + dirs[player.dir].y * 3, 1, ROWS - 2)
+        };
+      }
+      if (index === 2) {
+        return {
+          x: player.x < COLS / 2 ? COLS - 3 : 2,
+          y: player.y < ROWS / 2 ? ROWS - 4 : 3
+        };
+      }
+      const close = Math.abs(player.x - ghosts[index].x) + Math.abs(player.y - ghosts[index].y) < 7;
+      return close ? { x: 2, y: ROWS - 3 } : { x: player.x, y: player.y };
+    }
+
+    function farthestCorner(ghost) {
+      const corners = [
+        { x: 1, y: 1 },
+        { x: COLS - 2, y: 1 },
+        { x: 1, y: ROWS - 2 },
+        { x: COLS - 2, y: ROWS - 2 }
+      ];
+      return corners.sort((a, b) => {
+        const da = Math.abs(ghost.x - a.x) + Math.abs(ghost.y - a.y);
+        const db = Math.abs(ghost.x - b.x) + Math.abs(ghost.y - b.y);
+        return db - da;
+      })[0];
+    }
+
+    function deadEnd(x, y) {
+      return Object.keys(dirs).filter((dir) => canMove(x, y, dir)).length <= 1;
+    }
+
+    function collectAt(x, y, now) {
+      const item = grid[y][x];
+      if (item === ".") {
+        grid[y][x] = " ";
+        score += 10;
+        pelletsLeft--;
+      } else if (item === "H") {
+        grid[y][x] = " ";
+        score += 100;
+        powerUntil = now + POWER_MS;
+      } else if (item === "B") {
+        grid[y][x] = " ";
+        score += 500;
+      }
+    }
+
+    function checkCollisions(now) {
+      if (now < invulnerableUntil) return;
+
+      for (const ghost of ghosts) {
+        if (ghost.x !== player.x || ghost.y !== player.y || ghost.eaten || now < ghost.releaseAt) continue;
+        if (powerUntil > now) {
+          ghost.eaten = true;
+          ghost.scared = false;
+          score += 300;
+        } else {
+          lives--;
+          if (lives <= 0) {
+            endGame(false);
+            return;
+          }
+          resetRound(now);
+          return;
+        }
+      }
+    }
+
+    function endGame(won) {
+      state = won ? "win" : "over";
+      overlayTitle.textContent = won ? "Mandou bem!" : "Fim de jogo";
+      overlayText.textContent = won
+        ? `Voc\u00ea limpou o mapa com ${score} pontos.`
+        : `Voc\u00ea fez ${score} pontos. Bora buscar um score maior?`;
+      startBtn.textContent = "Jogar de novo";
+      overlay.hidden = false;
+    }
+
+    function isWall(value) {
+      return wallTokens.has(value);
+    }
+
+    function isWallAt(x, y) {
+      if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
+      return isWall(grid[y][x]);
+    }
+
+    function canMove(x, y, dir) {
+      const nx = wrapX(x + dirs[dir].x);
+      const ny = y + dirs[dir].y;
+      if (ny < 0 || ny >= ROWS) return false;
+      return !isWall(grid[ny][nx]);
+    }
+
+    function wrapX(x) {
+      if (x < 0) return COLS - 1;
+      if (x >= COLS) return 0;
+      return x;
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function updateHud(now = performance.now()) {
+      scoreEl.textContent = score.toString().padStart(6, "0");
+      livesEl.textContent = lives.toString();
+      powerEl.textContent = Math.max(0, Math.ceil((powerUntil - now) / 1000)) + "s";
+    }
+
+    function draw(now = performance.now()) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawMaze();
+      drawItems(now);
+      drawGhostHouse();
+      ghosts.forEach((ghost) => drawGhost(ghost, now));
+      drawPlayer(now);
+      if (now < freezeUntil && state === "playing") drawReady();
+    }
+
+    function drawMaze() {
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const token = grid[y][x];
+          if (!isWall(token)) continue;
+
+          const px = x * cell;
+          const py = y * rowH;
+          const color = wallColors[token] || wallColors["#"];
+          if (token === "x") {
+            ctx.fillStyle = "#000";
+            ctx.fillRect(px, py, cell + 1, rowH + 1);
+            continue;
+          }
+          ctx.fillStyle = token === "#" ? "#070716" : shadeColor(color, .13);
+          ctx.fillRect(px, py, cell + 1, rowH + 1);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = token === "#" ? 3 : 4;
+          ctx.shadowColor = color;
+          ctx.shadowBlur = token === "#" ? 4 : 7;
+          ctx.beginPath();
+          if (!isWallAt(x, y - 1)) {
+            ctx.moveTo(px, py + 2);
+            ctx.lineTo(px + cell, py + 2);
+          }
+          if (!isWallAt(x + 1, y)) {
+            ctx.moveTo(px + cell - 2, py);
+            ctx.lineTo(px + cell - 2, py + rowH);
+          }
+          if (!isWallAt(x, y + 1)) {
+            ctx.moveTo(px + cell, py + rowH - 2);
+            ctx.lineTo(px, py + rowH - 2);
+          }
+          if (!isWallAt(x - 1, y)) {
+            ctx.moveTo(px + 2, py + rowH);
+            ctx.lineTo(px + 2, py);
+          }
+          ctx.stroke();
+        }
+      }
+      ctx.shadowBlur = 0;
+    }
+
+    function shadeColor(hex, amount) {
+      const value = parseInt(hex.slice(1), 16);
+      const r = Math.round(((value >> 16) & 255) * amount);
+      const g = Math.round(((value >> 8) & 255) * amount);
+      const b = Math.round((value & 255) * amount);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function drawItems(now) {
+      let cardIndex = 0;
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const item = grid[y][x];
+          const cx = x * cell + cell / 2;
+          const cy = y * rowH + rowH / 2;
+          if (item === ".") {
+            ctx.fillStyle = "#ffd6bd";
+            ctx.fillRect(Math.round(cx - 3.5), Math.round(cy - 3.5), 7, 7);
+          } else if (item === "H") {
+            drawLogoPower(cx, cy, 31 + Math.sin(now / 210) * 2);
+          } else if (item === "B") {
+            drawBonusCard(cx, cy, cardIndex++);
+          }
+        }
+      }
+    }
+
+    function drawLogoPower(cx, cy, size) {
+      ctx.save();
+      ctx.shadowColor = "rgba(255, 16, 38, .95)";
+      ctx.shadowBlur = 13;
+      if (logoReady) {
+        ctx.drawImage(logoCanvas, cx - size / 2, cy - size / 2, size, size);
+      } else {
+        drawHeart(cx, cy, size * .65, "#ff1026");
+      }
+      ctx.restore();
+    }
+
+    function drawBonusCard(cx, cy, index) {
+      const sprite = cardSprites[index % cardSprites.length];
+      const w = cell * 2.55;
+      const h = w * .61;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.shadowColor = "rgba(255, 255, 255, .35)";
+      ctx.shadowBlur = 5;
+      if (sprite.ready) {
+        ctx.drawImage(sprite.canvas, -w / 2, -h / 2, w, h);
+      } else {
+        ctx.fillStyle = "#4555c9";
+        ctx.fillRect(-w / 2, -h / 2, w, h);
+      }
+      ctx.restore();
+    }
+
+    function drawPlayer(now) {
+      if (now < invulnerableUntil && now >= freezeUntil && Math.floor(now / 110) % 2) return;
+      const cx = player.x * cell + cell / 2;
+      const cy = player.y * rowH + rowH / 2;
+      const r = cell * .39;
+      const angle = Math.abs(Math.sin(mouthPhase)) * .31 + .12;
+      const base = { right: 0, down: Math.PI / 2, left: Math.PI, up: Math.PI * 1.5 }[player.dir];
+
+      ctx.save();
+      ctx.fillStyle = "#179bff";
+      ctx.shadowColor = "rgba(23, 155, 255, .82)";
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, base + angle, base + Math.PI * 2 - angle);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawGhost(ghost, now) {
+      if (now < ghost.releaseAt && now > roundStartedAt + 300) {
+        const blink = Math.floor(now / 220) % 2;
+        if (blink) return;
+      }
+
+      const cx = ghost.x * cell + cell / 2;
+      const cy = ghost.y * rowH + rowH / 2;
+      const r = cell * .35;
+      const flashing = powerUntil - now < 2200 && Math.floor(now / 170) % 2;
+      const bodyColor = ghost.eaten
+        ? "rgba(255,255,255,.15)"
+        : ghost.scared
+          ? (flashing ? "#f7f6ff" : "#164dff")
+          : ghost.color;
+
+      ctx.save();
+      ctx.fillStyle = bodyColor;
+      ctx.shadowColor = ghost.scared ? "#ffffff" : ghost.color;
+      ctx.shadowBlur = ghost.eaten ? 0 : 9;
+      ctx.beginPath();
+      ctx.arc(cx, cy - r * .08, r, Math.PI, 0);
+      ctx.lineTo(cx + r, cy + r);
+      ctx.lineTo(cx + r * .33, cy + r * .68);
+      ctx.lineTo(cx, cy + r);
+      ctx.lineTo(cx - r * .33, cy + r * .68);
+      ctx.lineTo(cx - r, cy + r);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(cx - r * .58, cy - r * .32, r * .42, r * .5);
+      ctx.fillRect(cx + r * .16, cy - r * .32, r * .42, r * .5);
+      ctx.fillStyle = ghost.scared ? "#ff1026" : "#111";
+      const eyeShift = dirs[ghost.dir] || { x: 0, y: 0 };
+      ctx.fillRect(cx - r * .47 + eyeShift.x * 3, cy - r * .19 + eyeShift.y * 3, r * .19, r * .22);
+      ctx.fillRect(cx + r * .27 + eyeShift.x * 3, cy - r * .19 + eyeShift.y * 3, r * .19, r * .22);
+      ctx.restore();
+    }
+
+    function drawGhostHouse() {
+      const x = 9 * cell;
+      const y = 18 * rowH;
+      ctx.save();
+      ctx.strokeStyle = "#f7b1d6";
+      ctx.lineWidth = 5;
+      ctx.shadowColor = "#f05bd7";
+      ctx.shadowBlur = 7;
+      ctx.beginPath();
+      ctx.moveTo(x + cell * 2, y + 2);
+      ctx.lineTo(x + cell * 4, y + 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawReady() {
+      ctx.save();
+      ctx.font = "700 46px Courier New";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffe650";
+      ctx.shadowColor = "#ff1026";
+      ctx.shadowBlur = 0;
+      ctx.fillText("READY!", canvas.width / 2, 24.2 * rowH);
+      ctx.restore();
+    }
+
+    function drawHeart(cx, cy, size, color) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = color;
+      ctx.fillRect(-size / 2, -size / 2, size, size);
+      ctx.beginPath();
+      ctx.arc(-size / 2, 0, size / 2, 0, Math.PI * 2);
+      ctx.arc(0, -size / 2, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function setDirection(dir) {
+      player.next = dir;
+      if (state === "ready") startGame();
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    }
+
+    document.addEventListener("keydown", (event) => {
+      const map = {
+        ArrowLeft: "left",
+        KeyA: "left",
+        ArrowRight: "right",
+        KeyD: "right",
+        ArrowUp: "up",
+        KeyW: "up",
+        ArrowDown: "down",
+        KeyS: "down"
+      };
+      if (map[event.code]) {
+        event.preventDefault();
+        setDirection(map[event.code]);
+      } else if (event.code === "Space") {
+        event.preventDefault();
+        pauseGame();
+      } else if (event.code === "Enter") {
+        event.preventDefault();
+        if (state === "ready" || state === "paused" || state === "over" || state === "win") startGame();
+      }
+    });
+
+    document.querySelectorAll("[data-dir]").forEach((button) => {
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        setDirection(button.dataset.dir);
+      });
+    });
+
+    startBtn.addEventListener("click", startGame);
+    pauseBtn.addEventListener("click", pauseGame);
+    fullscreenBtn.addEventListener("click", toggleFullscreen);
+
+    freshGame();
+  </script>
+</body>
+</html>
