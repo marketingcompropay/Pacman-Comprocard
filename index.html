@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>ComproCard Chase - Vertical</title>
+  <title>Game ComproCard</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000000'/%3E%3Cpath fill='%23ff1026' d='M16 27 5 16a7 7 0 0 1 10-10l1 1 1-1a7 7 0 0 1 10 10Z'/%3E%3C/svg%3E">
   <style>
     :root {
@@ -76,35 +76,39 @@
     }
 
     .topbar {
-      display: block;
+      display: grid;
+      gap: clamp(4px, .55vh, 8px);
     }
 
     .brand {
-      display: none;
+      display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: center;
+      gap: clamp(7px, 1vw, 12px);
       min-width: 0;
+      min-height: clamp(38px, 5.2vh, 56px);
     }
 
     .brand img {
-      width: clamp(42px, 7.4vh, 72px);
-      height: clamp(42px, 7.4vh, 72px);
+      width: clamp(38px, 5.2vh, 56px);
+      height: clamp(32px, 4.5vh, 49px);
       object-fit: contain;
       image-rendering: pixelated;
-      filter: drop-shadow(0 0 10px rgba(255, 16, 38, .48));
+      filter: drop-shadow(0 0 7px rgba(255, 16, 38, .55));
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(1.05rem, 2.2vh, 2rem);
-      line-height: .92;
+      font-size: clamp(1rem, 2vh, 1.75rem);
+      line-height: 1;
       letter-spacing: 0;
       text-transform: uppercase;
-      text-shadow: 3px 3px 0 #232aa9;
+      white-space: nowrap;
+      text-shadow: 3px 3px 0 #00328f;
     }
 
     h1 span {
-      display: block;
+      display: inline;
       color: var(--red);
     }
 
@@ -378,6 +382,10 @@
 <body>
   <main class="shell">
     <header class="topbar">
+      <div class="brand">
+        <img src="assets/logo-arcade.png" alt="">
+        <h1>Game <span>ComproCard</span></h1>
+      </div>
       <div class="hud" aria-live="polite">
         <div class="hud-item">Score: <strong id="score">000000</strong></div>
         <div class="hud-item">Lives: <strong id="lives">3</strong></div>
@@ -389,7 +397,7 @@
       <canvas id="game" width="900" height="1440" aria-label="Jogo de labirinto vertical da ComproCard"></canvas>
       <div class="overlay" id="overlay">
         <div class="modal">
-          <img class="modal-logo" src="assets/comprocard-logo.png" alt="">
+          <img class="modal-logo" src="assets/logo-arcade.png" alt="">
           <h2 id="overlayTitle">Pronto?</h2>
           <p id="overlayText">Colete os cart&otilde;es, ative os cora&ccedil;&otilde;es ComproCard e alcance o maior score.</p>
           <button type="button" id="startBtn" class="primary">Jogar</button>
