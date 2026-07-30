@@ -11,9 +11,9 @@
       --black: #000000;
       --ink: #ffffff;
       --muted: #aaa8bc;
-      --blue: #2932ff;
+      --blue: #0759ff;
       --red: #ff1026;
-      --gold: #ffe650;
+      --gold: #ffed00;
       --panel: #0b0b16;
       --line: #272847;
     }
@@ -76,18 +76,11 @@
     }
 
     .topbar {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      grid-template-areas:
-        "brand actions"
-        "hud hud";
-      gap: clamp(8px, 1vh, 14px);
-      align-items: center;
+      display: block;
     }
 
     .brand {
-      grid-area: brand;
-      display: flex;
+      display: none;
       align-items: center;
       gap: 10px;
       min-width: 0;
@@ -116,7 +109,6 @@
     }
 
     .actions {
-      grid-area: actions;
       display: flex;
       gap: 6px;
       justify-content: flex-end;
@@ -130,16 +122,16 @@
     }
 
     .hud {
-      grid-area: hud;
       display: grid;
-      grid-template-columns: 1.2fr .8fr .8fr;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
-      padding: clamp(7px, .8vh, 11px) clamp(9px, 1.2vw, 14px);
-      border-block: 2px solid #1e205a;
-      background: #080812;
-      font-size: clamp(.8rem, 1.65vh, 1.45rem);
+      padding: clamp(8px, .9vh, 13px) clamp(5px, .7vw, 10px);
+      border-bottom: 2px solid #252b9e;
+      background: #000;
+      font-size: clamp(.92rem, 1.75vh, 1.55rem);
       font-weight: 700;
       text-transform: uppercase;
+      text-shadow: 2px 2px 0 #303044;
     }
 
     .hud-item {
@@ -147,14 +139,50 @@
       white-space: nowrap;
     }
 
-    .hud-item:nth-child(2),
-    .hud-item:nth-child(3) {
+    .hud-item:nth-child(2) {
       text-align: right;
     }
 
     .hud strong {
-      color: var(--gold);
+      color: #fff;
       font-variant-numeric: tabular-nums;
+    }
+
+    .power-item {
+      display: none;
+    }
+
+    #lives {
+      display: inline-flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: clamp(3px, .55vw, 7px);
+      color: #fff;
+    }
+
+    .life-count {
+      margin-right: 2px;
+    }
+
+    .life-icon {
+      display: inline-block;
+      position: relative;
+      width: clamp(13px, 1.9vh, 22px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #ffed00;
+      filter: drop-shadow(2px 2px 0 #806f00);
+    }
+
+    .life-icon::after {
+      content: "";
+      position: absolute;
+      width: 58%;
+      height: 58%;
+      right: -5%;
+      top: 21%;
+      background: #000;
+      clip-path: polygon(100% 0, 0 50%, 100% 100%);
     }
 
     .stage {
@@ -169,10 +197,10 @@
       place-items: center;
       overflow: hidden;
       background: var(--black);
-      border: 2px solid #2229b2;
+      border: 3px solid #0759ff;
       box-shadow:
-        0 0 0 2px rgba(45, 53, 255, .25),
-        0 0 28px rgba(45, 53, 255, .2);
+        inset 0 0 0 4px #05062a,
+        0 0 0 2px #00328f;
     }
 
     canvas {
@@ -286,16 +314,18 @@
     }
 
     .item-key {
-      display: flex;
+      display: none;
       justify-content: flex-end;
       align-items: center;
       gap: clamp(7px, 1vw, 12px);
     }
 
-    .key-heart {
-      color: var(--red);
-      font-size: clamp(1.25rem, 2.5vh, 2.2rem);
-      text-shadow: 0 0 8px rgba(255, 16, 38, .65);
+    .key-logo {
+      width: clamp(34px, 4.7vh, 52px);
+      height: clamp(34px, 4.7vh, 52px);
+      object-fit: contain;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 6px rgba(255, 16, 38, .7));
     }
 
     .key-card {
@@ -321,7 +351,7 @@
       }
 
       .footer {
-        grid-template-columns: auto 1fr;
+        grid-template-columns: auto 1fr auto;
       }
     }
 
@@ -348,20 +378,10 @@
 <body>
   <main class="shell">
     <header class="topbar">
-      <div class="brand">
-        <img src="assets/comprocard-logo.png" alt="ComproCard">
-        <h1>ComproCard <span>Chase</span></h1>
-      </div>
-
-      <div class="actions">
-        <button type="button" id="pauseBtn" class="icon-button" aria-label="Pausar ou continuar o jogo">II</button>
-        <button type="button" id="fullscreenBtn" class="icon-button" aria-label="Abrir em tela cheia">FULL</button>
-      </div>
-
       <div class="hud" aria-live="polite">
-        <div class="hud-item">Score <strong id="score">000000</strong></div>
-        <div class="hud-item">Vidas <strong id="lives">3</strong></div>
-        <div class="hud-item">Poder <strong id="power">0s</strong></div>
+        <div class="hud-item">Score: <strong id="score">000000</strong></div>
+        <div class="hud-item">Lives: <strong id="lives">3</strong></div>
+        <div class="hud-item power-item">Power: <strong id="power">0s</strong></div>
       </div>
     </header>
 
@@ -391,8 +411,13 @@
       </div>
 
       <div class="item-key" aria-label="Itens especiais">
-        <span class="key-heart" aria-label="Cora&ccedil;&atilde;o de poder">&#9829;</span>
+        <img class="key-logo" src="assets/comprocard-logo.png" alt="Poder ComproCard">
         <span class="key-card" aria-label="Cart&atilde;o b&ocirc;nus">+500</span>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="pauseBtn" class="icon-button" aria-label="Pausar ou continuar o jogo">II</button>
+        <button type="button" id="fullscreenBtn" class="icon-button" aria-label="Abrir em tela cheia">FULL</button>
       </div>
     </footer>
   </main>
@@ -430,14 +455,14 @@
     const opposite = { left: "right", right: "left", up: "down", down: "up" };
     const wallTokens = new Set(["#", "x", "r", "b", "y", "g", "p", "c"]);
     const wallColors = {
-      "#": "#2932ff",
+      "#": "#0759ff",
       x: "#000000",
-      r: "#ff2440",
-      b: "#2f7cff",
-      y: "#ffe43b",
-      g: "#20d669",
-      p: "#f05bd7",
-      c: "#38d9ff"
+      r: "#0759ff",
+      b: "#0759ff",
+      y: "#0759ff",
+      g: "#0759ff",
+      p: "#0759ff",
+      c: "#0759ff"
     };
     const letterPatterns = {
       C: ["111", "100", "100", "100", "111"],
@@ -457,16 +482,16 @@
     ];
 
     const cardSources = [
-      "assets/card-amor.png",
-      "assets/card-amizade.png",
       "assets/card-paz.png",
-      "assets/card-gratidao.png"
+      "assets/card-amizade.png",
+      "assets/card-gratidao.png",
+      "assets/card-amor.png"
     ];
     const cardSprites = cardSources.map((src) => {
       const img = new Image();
       const sprite = { img, canvas: null, ready: false };
       img.onload = () => {
-        sprite.canvas = makePixelSprite(img, 112, 68, true);
+        sprite.canvas = makeCardSprite(img, 120, 74);
         sprite.ready = true;
       };
       img.src = src;
@@ -517,6 +542,20 @@
       return small;
     }
 
+    function makeCardSprite(img, width, height) {
+      const sprite = document.createElement("canvas");
+      sprite.width = width;
+      sprite.height = height;
+      const sctx = sprite.getContext("2d");
+      sctx.imageSmoothingEnabled = false;
+      const sx = Math.round(img.naturalWidth * .028);
+      const sy = Math.round(img.naturalHeight * .04);
+      const sw = Math.round(img.naturalWidth * .896);
+      const sh = Math.round(img.naturalHeight * .835);
+      sctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
+      return sprite;
+    }
+
     function makeMap() {
       const map = Array.from({ length: ROWS }, () => Array(COLS).fill("."));
 
@@ -543,7 +582,7 @@
       wallLine(4, 8, 16);
       wallLine(4, 19, 23);
 
-      drawWordOnMap(map, "COMPRO", 1, 6, ["r", "b", "y", "g", "p", "r"]);
+      drawWordOnMap(map, "COMPRO", 1, 6, ["b", "b", "b", "b", "b", "b"]);
       sealCells(map, [
         [6, 7], [14, 7], [18, 7], [22, 7],
         [6, 8], [22, 8],
@@ -576,7 +615,7 @@
       }
       map[18][12] = " ";
 
-      drawWordOnMap(map, "CARD", 4, 27, ["c", "y", "r", "g"]);
+      drawWordOnMap(map, "CARD", 4, 27, ["b", "b", "b", "b"]);
       sealCells(map, [
         [9, 28], [13, 28], [17, 28],
         [17, 29], [17, 30]
@@ -603,12 +642,12 @@
       placeItem(map, 2, 36, "B");
       placeItem(map, 22, 36, "B");
 
-      placeItem(map, 1, 5, "H");
-      placeItem(map, 23, 5, "H");
-      placeItem(map, 1, 34, "H");
-      placeItem(map, 23, 34, "H");
-      placeItem(map, 12, 14, "H");
-      placeItem(map, 12, 24, "H");
+      placeItem(map, 12, 5, "H");
+      placeItem(map, 2, 14, "H");
+      placeItem(map, 22, 14, "H");
+      placeItem(map, 3, 24, "H");
+      placeItem(map, 21, 24, "H");
+      placeItem(map, 12, 38, "H");
 
       map[playerSpawn.y][playerSpawn.x] = " ";
       for (const spawn of ghostSpawns) map[spawn.y][spawn.x] = " ";
@@ -897,7 +936,11 @@
 
     function updateHud(now = performance.now()) {
       scoreEl.textContent = score.toString().padStart(6, "0");
-      livesEl.textContent = lives.toString();
+      if (livesEl.dataset.value !== String(lives)) {
+        livesEl.dataset.value = String(lives);
+        livesEl.innerHTML = `<span class="life-count">${lives}</span>${Array.from({ length: lives }, () => '<span class="life-icon" aria-hidden="true"></span>').join("")}`;
+        livesEl.setAttribute("aria-label", `${lives} vidas`);
+      }
       powerEl.textContent = Math.max(0, Math.ceil((powerUntil - now) / 1000)) + "s";
     }
 
@@ -928,33 +971,37 @@
             ctx.fillRect(px, py, cell + 1, rowH + 1);
             continue;
           }
-          ctx.fillStyle = token === "#" ? "#070716" : shadeColor(color, .13);
+          ctx.fillStyle = "#000";
           ctx.fillRect(px, py, cell + 1, rowH + 1);
-          ctx.strokeStyle = color;
-          ctx.lineWidth = token === "#" ? 3 : 4;
-          ctx.shadowColor = color;
-          ctx.shadowBlur = token === "#" ? 4 : 7;
-          ctx.beginPath();
-          if (!isWallAt(x, y - 1)) {
-            ctx.moveTo(px, py + 2);
-            ctx.lineTo(px + cell, py + 2);
-          }
-          if (!isWallAt(x + 1, y)) {
-            ctx.moveTo(px + cell - 2, py);
-            ctx.lineTo(px + cell - 2, py + rowH);
-          }
-          if (!isWallAt(x, y + 1)) {
-            ctx.moveTo(px + cell, py + rowH - 2);
-            ctx.lineTo(px, py + rowH - 2);
-          }
-          if (!isWallAt(x - 1, y)) {
-            ctx.moveTo(px + 2, py + rowH);
-            ctx.lineTo(px + 2, py);
-          }
-          ctx.stroke();
+          drawWallOutline(x, y, px, py, shadeColor(color, .48), token === "#" ? 2 : 3, 2);
+          drawWallOutline(x, y, px, py, color, token === "#" ? 2 : 3, token === "#" ? 7 : 9);
         }
       }
       ctx.shadowBlur = 0;
+    }
+
+    function drawWallOutline(x, y, px, py, color, width, inset) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      if (!isWallAt(x, y - 1)) {
+        ctx.moveTo(px, py + inset);
+        ctx.lineTo(px + cell, py + inset);
+      }
+      if (!isWallAt(x + 1, y)) {
+        ctx.moveTo(px + cell - inset, py);
+        ctx.lineTo(px + cell - inset, py + rowH);
+      }
+      if (!isWallAt(x, y + 1)) {
+        ctx.moveTo(px + cell, py + rowH - inset);
+        ctx.lineTo(px, py + rowH - inset);
+      }
+      if (!isWallAt(x - 1, y)) {
+        ctx.moveTo(px + inset, py + rowH);
+        ctx.lineTo(px + inset, py);
+      }
+      ctx.stroke();
     }
 
     function shadeColor(hex, amount) {
@@ -973,10 +1020,10 @@
           const cx = x * cell + cell / 2;
           const cy = y * rowH + rowH / 2;
           if (item === ".") {
-            ctx.fillStyle = "#ffd6bd";
+            ctx.fillStyle = "#ffffff";
             ctx.fillRect(Math.round(cx - 3.5), Math.round(cy - 3.5), 7, 7);
           } else if (item === "H") {
-            drawLogoPower(cx, cy, 31 + Math.sin(now / 210) * 2);
+            drawLogoPower(cx, cy, 40 + Math.sin(now / 210) * 2);
           } else if (item === "B") {
             drawBonusCard(cx, cy, cardIndex++);
           }
@@ -1022,9 +1069,9 @@
       const base = { right: 0, down: Math.PI / 2, left: Math.PI, up: Math.PI * 1.5 }[player.dir];
 
       ctx.save();
-      ctx.fillStyle = "#179bff";
-      ctx.shadowColor = "rgba(23, 155, 255, .82)";
-      ctx.shadowBlur = 12;
+      ctx.fillStyle = "#ffed00";
+      ctx.shadowColor = "rgba(255, 237, 0, .72)";
+      ctx.shadowBlur = 7;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, r, base + angle, base + Math.PI * 2 - angle);
