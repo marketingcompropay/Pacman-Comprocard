@@ -461,23 +461,13 @@
       down: { x: 0, y: 1 }
     };
     const opposite = { left: "right", right: "left", up: "down", down: "up" };
-    const wallTokens = new Set(["#", "x", "r", "b", "y", "g", "p", "c"]);
-    const wallColors = {
-      "#": "#0759ff",
-      x: "#000000",
-      r: "#0759ff",
-      b: "#0759ff",
-      y: "#0759ff",
-      g: "#0759ff",
-      p: "#0759ff",
-      c: "#0759ff"
-    };
-    const letterPatterns = {
+    const wallTokens = new Set(["#", "w", "v"]);
+    const wordPatterns = {
       C: ["111", "100", "100", "100", "111"],
       O: ["111", "101", "101", "101", "111"],
       M: ["101", "111", "111", "101", "101"],
-      P: ["110", "101", "110", "100", "100"],
-      R: ["110", "101", "110", "101", "101"],
+      P: ["111", "101", "111", "100", "100"],
+      R: ["111", "101", "111", "110", "101"],
       A: ["010", "101", "111", "101", "101"],
       D: ["110", "101", "101", "101", "110"]
     };
@@ -569,19 +559,14 @@
         for (let y = y1; y <= y2; y++) map[y][x] = token;
       };
 
-      wallLine(2, 3, 9);
-      wallLine(2, 15, 21);
+      wallLine(2, 5, 9);
+      wallLine(2, 15, 19);
       wallColumn(12, 1, 3);
       wallLine(4, 1, 5);
       wallLine(4, 8, 16);
       wallLine(4, 19, 23);
 
-      drawWordOnMap(map, "COMPRO", 1, 6, ["b", "b", "b", "b", "b", "b"]);
-      sealCells(map, [
-        [6, 7], [14, 7], [18, 7], [22, 7],
-        [6, 8], [22, 8],
-        [6, 9], [22, 9]
-      ]);
+      drawWordOnMap(map, "COMPRO", 1, 6);
       clearOpenArea(map, 1, 6, 23, 10);
 
       wallLine(12, 2, 6);
@@ -610,12 +595,8 @@
       }
       map[18][12] = " ";
 
-      drawWordOnMap(map, "CARD", 4, 27, ["b", "b", "b", "b"]);
-      sealCells(map, [
-        [9, 28], [13, 28], [17, 28],
-        [17, 29], [17, 30]
-      ]);
-      clearOpenArea(map, 3, 27, 21, 31);
+      drawWordOnMap(map, "CARD", 5, 27);
+      clearOpenArea(map, 4, 27, 20, 31);
 
       wallLine(25, 2, 6);
       wallLine(25, 9, 15);
@@ -630,13 +611,20 @@
       wallLine(37, 14, 16);
       wallLine(37, 18, 22);
 
-      map[20][0] = ".";
-      map[20][COLS - 1] = ".";
+      clearOpenArea(map, 1, 1, 4, 3);
+      clearOpenArea(map, 20, 1, 23, 3);
+      clearOpenArea(map, 1, 34, 4, 36);
+      clearOpenArea(map, 20, 34, 23, 36);
+
+      for (let y = 19; y <= 21; y++) {
+        map[y][0] = " ";
+        map[y][COLS - 1] = " ";
+      }
 
       placeItem(map, 2, 2, "B");
       placeItem(map, 22, 2, "B");
-      placeItem(map, 2, 36, "B");
-      placeItem(map, 22, 36, "B");
+      placeItem(map, 2, 35, "B");
+      placeItem(map, 22, 35, "B");
 
       placeItem(map, 12, 5, "H");
       placeItem(map, 2, 14, "H");
@@ -647,18 +635,17 @@
 
       map[playerSpawn.y][playerSpawn.x] = " ";
       for (const spawn of ghostSpawns) map[spawn.y][spawn.x] = " ";
+      sealUnreachableVoids(map);
 
       return map;
     }
 
-    function drawWordOnMap(map, word, startX, startY, colors) {
+    function drawWordOnMap(map, word, startX, startY) {
       let cursor = startX;
-      [...word].forEach((letter, index) => {
-        const pattern = letterPatterns[letter];
-        const token = colors[index % colors.length];
-        pattern.forEach((row, py) => {
+      [...word].forEach((letter) => {
+        wordPatterns[letter].forEach((row, py) => {
           [...row].forEach((pixel, px) => {
-            if (pixel === "1") map[startY + py][cursor + px] = token;
+            if (pixel === "1") map[startY + py][cursor + px] = "w";
           });
         });
         cursor += 4;
@@ -669,16 +656,30 @@
       if (!wallTokens.has(map[y][x])) map[y][x] = item;
     }
 
-    function sealCells(map, cells) {
-      cells.forEach(([x, y]) => {
-        map[y][x] = "x";
-      });
-    }
-
     function clearOpenArea(map, x1, y1, x2, y2) {
       for (let y = y1; y <= y2; y++) {
         for (let x = x1; x <= x2; x++) {
           if (map[y][x] === ".") map[y][x] = " ";
+        }
+      }
+    }
+
+    function sealUnreachableVoids(map) {
+      const seen = new Set();
+      const queue = [[playerSpawn.x, playerSpawn.y]];
+
+      while (queue.length) {
+        const [x, y] = queue.shift();
+        if (x < 0 || x >= COLS || y < 0 || y >= ROWS) continue;
+        const key = `${x},${y}`;
+        if (seen.has(key) || wallTokens.has(map[y][x])) continue;
+        seen.add(key);
+        Object.values(dirs).forEach((dir) => queue.push([x + dir.x, y + dir.y]));
+      }
+
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          if (map[y][x] === " " && !seen.has(`${x},${y}`)) map[y][x] = "v";
         }
       }
     }
@@ -965,78 +966,52 @@
       for (let y = 0; y < ROWS; y++) {
         for (let x = 0; x < COLS; x++) {
           const token = grid[y][x];
-          if (token !== "#") continue;
+          if (!wallTokens.has(token)) continue;
+          if (token === "v") continue;
 
           const px = x * cell;
           const py = y * rowH;
           ctx.fillStyle = "#000";
           ctx.fillRect(px, py, cell + 1, rowH + 1);
-          drawWallOutline(x, y, px, py, "#001849", 8, 3);
-          drawWallOutline(x, y, px, py, "#0759ff", 3, 3);
+          if (token === "w") {
+            ctx.shadowBlur = 0;
+            drawWallOutline(x, y, px, py, token, "#4a000a", 15, 3);
+            ctx.shadowColor = "#ff1026";
+            ctx.shadowBlur = 12;
+            drawWallOutline(x, y, px, py, token, "#ff1026", 8, 3);
+            ctx.shadowBlur = 0;
+            drawWallOutline(x, y, px, py, token, "#ff8590", 2, 3);
+          } else {
+            ctx.shadowBlur = 0;
+            drawWallOutline(x, y, px, py, token, "#001849", 8, 3);
+            drawWallOutline(x, y, px, py, token, "#0759ff", 3, 3);
+          }
         }
       }
       ctx.shadowBlur = 0;
-      drawBrandWords();
     }
 
-    function drawWallOutline(x, y, px, py, color, width, inset) {
+    function drawWallOutline(x, y, px, py, token, color, width, inset) {
       ctx.strokeStyle = color;
       ctx.lineWidth = width;
-      ctx.shadowBlur = 0;
       ctx.beginPath();
-      if (!isWallAt(x, y - 1)) {
+      if (grid[y - 1]?.[x] !== token) {
         ctx.moveTo(px, py + inset);
         ctx.lineTo(px + cell, py + inset);
       }
-      if (!isWallAt(x + 1, y)) {
+      if (grid[y]?.[x + 1] !== token) {
         ctx.moveTo(px + cell - inset, py);
         ctx.lineTo(px + cell - inset, py + rowH);
       }
-      if (!isWallAt(x, y + 1)) {
+      if (grid[y + 1]?.[x] !== token) {
         ctx.moveTo(px + cell, py + rowH - inset);
         ctx.lineTo(px, py + rowH - inset);
       }
-      if (!isWallAt(x - 1, y)) {
+      if (grid[y]?.[x - 1] !== token) {
         ctx.moveTo(px + inset, py + rowH);
         ctx.lineTo(px + inset, py);
       }
       ctx.stroke();
-    }
-
-    function drawBrandWords() {
-      drawNeonWord("COMPRO", canvas.width / 2, rowH * 10.85, 188, canvas.width - cell * 1.8);
-      drawNeonWord("CARD", canvas.width / 2, rowH * 31.85, 225, canvas.width - cell * 6.2);
-    }
-
-    function drawNeonWord(text, cx, baseline, fontSize, maxWidth) {
-      ctx.save();
-      ctx.font = `900 ${fontSize}px "Arial Black", Impact, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
-      ctx.lineJoin = "bevel";
-      ctx.miterLimit = 2;
-      const measured = ctx.measureText(text).width;
-      const scaleX = Math.min(1, maxWidth / measured);
-      ctx.translate(Math.round(cx), Math.round(baseline));
-      ctx.scale(scaleX, 1);
-      ctx.strokeStyle = "#001849";
-      ctx.lineWidth = 18;
-      ctx.strokeText(text, 0, 0);
-      ctx.strokeStyle = "#0759ff";
-      ctx.lineWidth = 9;
-      ctx.strokeText(text, 0, 0);
-      ctx.strokeStyle = "#002b91";
-      ctx.lineWidth = 2;
-      ctx.strokeText(text, 0, 0);
-      ctx.restore();
-    }
-
-    function shadeColor(hex, amount) {
-      const value = parseInt(hex.slice(1), 16);
-      const r = Math.round(((value >> 16) & 255) * amount);
-      const g = Math.round(((value >> 8) & 255) * amount);
-      const b = Math.round((value & 255) * amount);
-      return `rgb(${r}, ${g}, ${b})`;
     }
 
     function drawItems(now) {
@@ -1072,7 +1047,7 @@
 
     function drawBonusCard(cx, cy, index) {
       const sprite = cardSprites[index % cardSprites.length];
-      const w = cell * 3.85;
+      const w = cell * 2.85;
       const h = w * .68;
       ctx.save();
       ctx.translate(cx, cy);
